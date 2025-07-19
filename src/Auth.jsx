@@ -44,6 +44,25 @@ function Auth() {
     setLoading(false);
   };
 
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setMessage('');
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin, // Redirect back to your app
+      },
+    });
+
+    if (error) {
+      setMessage(`ข้อผิดพลาดในการเข้าสู่ระบบด้วย Google: ${error.message}`);
+    } else {
+      // Supabase will redirect the user, so no direct success message here
+      // The onAuthStateChange listener in App.jsx will handle the session
+    }
+    setLoading(false); // This might not be reached if redirect happens immediately
+  };
+
   return (
     <div className="bg-surface p-10 rounded-3xl shadow-2xl max-w-md w-full text-center border border-border">
       <h2 className="text-4xl font-semibold text-text mb-6">
@@ -86,6 +105,20 @@ function Auth() {
           {message}
         </p>
       )}
+
+      <div className="mt-6 border-t border-border pt-6">
+        <p className="text-textSecondary mb-4">หรือเข้าสู่ระบบด้วย</p>
+        <button
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-xl text-xl transition-all duration-300 ease-in-out shadow-lg
+                     focus:outline-none focus:ring-4 focus:ring-blue-600/50 focus:ring-offset-2 focus:ring-offset-surface
+                     active:scale-98 flex items-center justify-center space-x-3"
+          onClick={handleGoogleSignIn}
+          disabled={loading}
+        >
+          <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google logo" className="w-6 h-6" />
+          <span>เข้าสู่ระบบด้วย Google</span>
+        </button>
+      </div>
 
       <button
         className="mt-6 text-secondary hover:underline text-lg"
