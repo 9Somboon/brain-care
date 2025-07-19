@@ -7,8 +7,6 @@ import Auth from './Auth'; // Import Auth component
 function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true); // New loading state for auth
-  const [message, setMessage] = useState('กำลังเชื่อมต่อกับ Supabase...');
-  const [isConnected, setIsConnected] = useState(false);
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [isUserDashboardVisible, setIsUserDashboardVisible] = useState(false);
 
@@ -27,31 +25,6 @@ function App() {
 
     // Cleanup subscription
     return () => subscription.unsubscribe();
-  }, []);
-
-  // Existing connection check (can run in parallel or after auth check)
-  useEffect(() => {
-    const checkSupabaseConnection = async () => {
-      try {
-        // This is a good way to check connection without needing a real table
-        const { error } = await supabase.from('non_existent_table').select('*').limit(1);
-        if (error && error.code === '42P01') {
-          setMessage('เชื่อมต่อ Supabase แล้ว! พร้อมสร้างแอปฝึกสมองของคุณ');
-          setIsConnected(true);
-        } else if (error) {
-          setMessage(`ข้อผิดพลาดในการเชื่อมต่อ Supabase: ${error.message}`);
-          setIsConnected(false);
-        } else {
-          setMessage('เชื่อมต่อ Supabase สำเร็จ (ได้รับข้อมูลที่ไม่คาดคิด)');
-          setIsConnected(true);
-        }
-      } catch (err) {
-        setMessage(`เชื่อมต่อ Supabase ล้มเหลว: ${err.message}`);
-        setIsConnected(false);
-      }
-    };
-
-    checkSupabaseConnection();
   }, []);
 
   if (loading) {
@@ -98,9 +71,7 @@ function App() {
           มาเริ่มการฝึกความจำของคุณกันเลย
         </p>
 
-        <div className={`p-6 rounded-xl mb-8 ${isConnected ? 'bg-success/20 border-success text-success' : 'bg-error/20 border-error text-error'} border-2`}>
-          <p className="text-2xl font-medium">{message}</p>
-        </div>
+        {/* Removed the connection message box as requested */}
 
         <div className="flex flex-col space-y-6">
           <button
@@ -131,9 +102,7 @@ function App() {
           </button>
         </div>
 
-        <p className="text-lg text-textSecondary mt-8">
-          การเดินทางสู่จิตใจที่เฉียบคมของคุณเริ่มต้นที่นี่
-        </p>
+        {/* Removed the footer text as requested */}
       </main>
     </div>
   );
