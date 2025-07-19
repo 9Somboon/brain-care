@@ -173,7 +173,7 @@ function MemoryGame({ onBack }) {
                   <span className="text-8xl font-bold text-primary">?</span>
                 </div>
                 {/* ด้านหลังของการ์ด (เมื่อพลิกแล้ว) - แสดงอีโมจิผลไม้ */}
-                <div className="absolute inset-0 flex items-center justify-center bg-surface rounded-xl border-4 border-primary card-face card-back-face">
+                <div className="absolute inset-0 flex items-center justify-center bg-surface rounded-xl border-4 border-surface card-face card-back-face">
                   <span className="text-8xl font-bold">{card.content}</span> {/* Display emoji here */}
                 </div>
               </div>
@@ -200,10 +200,6 @@ function MemoryGame({ onBack }) {
           </button>
         </div>
       </main>
-
-      <footer className="mt-8 text-textSecondary text-lg">
-        &copy; {new Date().getFullYear()} BrainCare Pro. สงวนลิขสิทธิ์
-      </footer>
     </div>
   );
 }

@@ -3,6 +3,8 @@ import { supabase } from './supabaseClient';
 import { Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { motion } from 'framer-motion';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { th } from 'date-fns/locale'; // For Thai localization of dates
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
@@ -11,6 +13,10 @@ const UserDashboard = ({ onBack }) => {
   const [gameSessions, setGameSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeSummaryTab, setActiveSummaryTab] = useState('daily'); // 'daily', 'weekly', 'monthly'
+  const [dailySummaries, setDailySummaries] = useState([]);
+  const [weeklySummaries, setWeeklySummaries] = useState([]);
+  const [monthlySummaries, setMonthlySummaries] = useState([]);
 
   useEffect(() => {
     const fetchGameSessions = async () => {
@@ -30,6 +36,7 @@ const UserDashboard = ({ onBack }) => {
 
         if (error) throw error;
         setGameSessions(data);
+        processGameSessions(data); // Process data for summaries
       } catch (err) {
         console.error('Error fetching game sessions:', err.message);
         setError('ไม่สามารถโหลดข้อมูลสถิติได้: ' + err.message);
@@ -40,6 +47,62 @@ const UserDashboard = ({ onBack }) => {
 
     fetchGameSessions();
   }, []);
+
+  const processGameSessions = (sessions) => {
+    const daily = {};
+    const weekly = {};
+    const monthly = {};
+
+    sessions.forEach(session => {
+      const date = new Date(session.created_at);
+
+      // Daily Summary
+      const dayKey = format(date, 'yyyy-MM-dd');
+      if (!daily[dayKey]) {
+        daily[dayKey] = { totalGames: 0, totalScore: 0, totalTime: 0, totalFlips: 0, date: date };
+      }
+      daily[dayKey].totalGames++;
+      daily[dayKey].totalScore += session.score;
+      daily[dayKey].totalTime += session.time_taken_seconds;
+      daily[dayKey].totalFlips += session.flips;
+
+      // Weekly Summary (week starts on Monday)
+      const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+      const weekKey = format(weekStart, 'yyyy-MM-dd'); // Use start of week as key
+      if (!weekly[weekKey]) {
+        weekly[weekKey] = { totalGames: 0, totalScore: 0, totalTime: 0, totalFlips: 0, weekStart: weekStart };
+      }
+      weekly[weekKey].totalGames++;
+      weekly[weekKey].totalScore += session.score;
+      weekly[weekKey].totalTime += session.time_taken_seconds;
+      weekly[weekKey].totalFlips += session.flips;
+
+      // Monthly Summary
+      const monthStart = startOfMonth(date);
+      const monthKey = format(monthStart, 'yyyy-MM');
+      if (!monthly[monthKey]) {
+        monthly[monthKey] = { totalGames: 0, totalScore: 0, totalTime: 0, totalFlips: 0, monthStart: monthStart };
+      }
+      monthly[monthKey].totalGames++;
+      monthly[monthKey].totalScore += session.score;
+      monthly[monthKey].totalTime += session.time_taken_seconds;
+      monthly[monthKey].totalFlips += session.flips;
+    });
+
+    // Convert objects to sorted arrays and calculate averages
+    const calculateAverages = (data) => {
+      return Object.values(data).map(item => ({
+        ...item,
+        avgScore: (item.totalScore / item.totalGames).toFixed(2),
+        avgTime: (item.totalTime / item.totalGames).toFixed(2),
+        avgFlips: (item.totalFlips / item.totalGames).toFixed(2),
+      }));
+    };
+
+    setDailySummaries(calculateAverages(daily).sort((a, b) => a.date - b.date));
+    setWeeklySummaries(calculateAverages(weekly).sort((a, b) => a.weekStart - b.weekStart));
+    setMonthlySummaries(calculateAverages(monthly).sort((a, b) => a.monthStart - b.monthStart));
+  };
 
   const totalGames = gameSessions.length;
   const totalScore = gameSessions.reduce((sum, session) => sum + session.score, 0);
@@ -116,7 +179,7 @@ const UserDashboard = ({ onBack }) => {
       title: {
         display: true,
         text: 'สถิติการเล่นเกม',
-        color: '#FFFFFF', // text
+        color: '#171717', // Changed from #FFFFFF to #171717 (text color)
         font: {
           size: 24,
           weight: 'bold',
@@ -156,6 +219,36 @@ const UserDashboard = ({ onBack }) => {
   const chartVariants = {
     hidden: { opacity: 0, scale: 0.9 },
     visible: { opacity: 1, scale: 1, transition: { duration: 0.8, ease: "easeOut", delay: 0.2 } },
+  };
+
+  const renderSummaryCards = (summaries, type) => {
+    if (summaries.length === 0) {
+      return <p className="text-center text-xl text-textSecondary p-8">ไม่มีข้อมูลสำหรับช่วงเวลานี้</p>;
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {summaries.map((summary, index) => (
+          <motion.div
+            key={index}
+            className="bg-background p-6 rounded-xl shadow-lg border border-border transform transition-transform duration-300 hover:scale-103"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+          >
+            <h3 className="text-xl font-semibold text-primary mb-3">
+              {type === 'daily' && format(summary.date, 'dd MMMM yyyy', { locale: th })}
+              {type === 'weekly' && `สัปดาห์ของ ${format(summary.weekStart, 'dd MMMM yyyy', { locale: th })}`}
+              {type === 'monthly' && format(summary.monthStart, 'MMMM yyyy', { locale: th })}
+            </h3>
+            <p className="text-textSecondary text-lg mb-1">เกมที่เล่น: <span className="font-bold text-text">{summary.totalGames}</span></p>
+            <p className="text-textSecondary text-lg mb-1">คะแนนเฉลี่ย: <span className="font-bold text-text">{summary.avgScore}</span></p>
+            <p className="text-textSecondary text-lg mb-1">เวลาเฉลี่ย: <span className="font-bold text-text">{summary.avgTime} วินาที</span></p>
+            <p className="text-textSecondary text-lg">พลิกการ์ดเฉลี่ย: <span className="font-bold text-text">{summary.avgFlips}</span></p>
+          </motion.div>
+        ))}
+      </div>
+    );
   };
 
   if (loading) {
@@ -281,6 +374,43 @@ const UserDashboard = ({ onBack }) => {
           </>
         )}
       </main>
+
+      {totalGames > 0 && (
+        <section className="w-full max-w-6xl bg-surface p-10 rounded-3xl shadow-2xl border border-border mt-12 mb-12">
+          <h2 className="text-4xl font-semibold text-text mb-8 text-center">
+            สรุปสถิติรายวัน รายสัปดาห์ รายเดือน
+          </h2>
+          <div className="flex justify-center gap-4 mb-8">
+            <button
+              className={`py-3 px-6 rounded-full text-xl font-semibold transition-all duration-300 ease-in-out
+                          ${activeSummaryTab === 'daily' ? 'bg-primary text-white shadow-lg' : 'bg-background text-textSecondary hover:bg-surface/70 border border-border'}`}
+              onClick={() => setActiveSummaryTab('daily')}
+            >
+              รายวัน
+            </button>
+            <button
+              className={`py-3 px-6 rounded-full text-xl font-semibold transition-all duration-300 ease-in-out
+                          ${activeSummaryTab === 'weekly' ? 'bg-primary text-white shadow-lg' : 'bg-background text-textSecondary hover:bg-surface/70 border border-border'}`}
+              onClick={() => setActiveSummaryTab('weekly')}
+            >
+              รายสัปดาห์
+            </button>
+            <button
+              className={`py-3 px-6 rounded-full text-xl font-semibold transition-all duration-300 ease-in-out
+                          ${activeSummaryTab === 'monthly' ? 'bg-primary text-white shadow-lg' : 'bg-background text-textSecondary hover:bg-surface/70 border border-border'}`}
+              onClick={() => setActiveSummaryTab('monthly')}
+            >
+              รายเดือน
+            </button>
+          </div>
+
+          <div className="summary-content">
+            {activeSummaryTab === 'daily' && renderSummaryCards(dailySummaries, 'daily')}
+            {activeSummaryTab === 'weekly' && renderSummaryCards(weeklySummaries, 'weekly')}
+            {activeSummaryTab === 'monthly' && renderSummaryCards(monthlySummaries, 'monthly')}
+          </div>
+        </section>
+      )}
 
       <button
         className="bg-primary hover:bg-primary/90 text-white font-bold py-5 px-10 rounded-xl text-2xl transition-all duration-300 ease-in-out shadow-lg
