@@ -1,18 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import MemoryGame from './MemoryGame';
-import UserDashboard from './UserDashboard'; // Import UserDashboard
+import UserDashboard from './UserDashboard';
+import Auth from './Auth'; // Import Auth component
 
 function App() {
-  console.log('App.jsx loaded - Version with User Dashboard integration');
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true); // New loading state for auth
   const [message, setMessage] = useState('กำลังเชื่อมต่อกับ Supabase...');
   const [isConnected, setIsConnected] = useState(false);
   const [isGameStarted, setIsGameStarted] = useState(false);
-  const [isUserDashboardVisible, setIsUserDashboardVisible] = useState(false); // New state for user dashboard
+  const [isUserDashboardVisible, setIsUserDashboardVisible] = useState(false);
 
+  useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // Subscribe to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // Cleanup subscription
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Existing connection check (can run in parallel or after auth check)
   useEffect(() => {
     const checkSupabaseConnection = async () => {
       try {
+        // This is a good way to check connection without needing a real table
         const { error } = await supabase.from('non_existent_table').select('*').limit(1);
         if (error && error.code === '42P01') {
           setMessage('เชื่อมต่อ Supabase แล้ว! พร้อมสร้างแอปฝึกสมองของคุณ');
@@ -33,6 +54,24 @@ function App() {
     checkSupabaseConnection();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-text">
+        <p className="text-2xl text-primary">กำลังโหลด...</p>
+      </div>
+    );
+  }
+
+  // If no session, show the authentication form
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8 bg-background text-text">
+        <Auth />
+      </div>
+    );
+  }
+
+  // If session exists, render the main app content
   if (isGameStarted) {
     return <MemoryGame onBack={() => setIsGameStarted(false)} />;
   }
@@ -41,17 +80,15 @@ function App() {
     return <UserDashboard onBack={() => setIsUserDashboardVisible(false)} />;
   }
 
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error.message);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-background text-text">
-      <header className="w-full max-w-4xl text-center mb-12">
-        <h1 className="text-6xl font-bold text-primary mb-4 leading-tight">
-          BrainCare Pro
-        </h1>
-        <p className="text-2xl text-textSecondary max-w-2xl mx-auto">
-          เสริมสร้างพลังสมอง ทีละเกม ออกแบบมาเพื่อความชัดเจนและใช้งานง่าย
-        </p>
-      </header>
-
       <main className="bg-surface p-10 rounded-3xl shadow-2xl max-w-2xl w-full text-center border border-border">
         <h2 className="text-4xl font-semibold text-text mb-6">
           ยินดีต้อนรับสู่แอปฝึกสมองของคุณ!
@@ -83,16 +120,21 @@ function App() {
           >
             ดู Dashboard ผู้ใช้
           </button>
+
+          <button
+            className="bg-error hover:bg-error/90 text-white font-bold py-5 px-10 rounded-xl text-2xl transition-all duration-300 ease-in-out shadow-lg
+                       focus:outline-none focus:ring-4 focus:ring-error/50 focus:ring-offset-2 focus:ring-offset-surface
+                       active:scale-98"
+            onClick={handleSignOut}
+          >
+            ออกจากระบบ
+          </button>
         </div>
 
         <p className="text-lg text-textSecondary mt-8">
           การเดินทางสู่จิตใจที่เฉียบคมของคุณเริ่มต้นที่นี่
         </p>
       </main>
-
-      <footer className="mt-12 text-textSecondary text-lg">
-        &copy; {new Date().getFullYear()} BrainCare Pro. สงวนลิขสิทธิ์
-      </footer>
     </div>
   );
 }

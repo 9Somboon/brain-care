@@ -113,10 +113,13 @@ function MemoryGame({ onBack }) {
   // Function to save game session to Supabase
   const saveGameSession = async (score, time_taken_seconds, flips) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser(); // Get current user
+      const userId = user ? user.id : null; // Get user ID, or null if not logged in
+
       const { data, error } = await supabase
         .from('game_sessions')
         .insert([
-          { score, time_taken_seconds, flips }
+          { score, time_taken_seconds, flips, user_id: userId } // Pass user_id
         ]);
 
       if (error) {

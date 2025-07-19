@@ -290,10 +290,6 @@ const UserDashboard = ({ onBack }) => {
       >
         กลับสู่หน้าหลัก
       </button>
-
-      <footer className="mt-12 text-textSecondary text-lg">
-        &copy; {new Date().getFullYear()} BrainCare Pro. สงวนลิขสิทธิ์
-      </footer>
     </div>
   );
 };
