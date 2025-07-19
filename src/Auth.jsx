@@ -19,7 +19,7 @@ function Auth() {
         email,
         password,
         options: {
-          emailRedirectTo: window.location.origin, // Redirect back to current page after email confirmation (if enabled)
+          emailRedirectTo: import.meta.env.VITE_SUPABASE_REDIRECT_URL, // Use explicit redirect URL
           data: {
             // You can add user metadata here if needed
           }
@@ -50,7 +50,7 @@ function Auth() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin, // Redirect back to your app
+        redirectTo: import.meta.env.VITE_SUPABASE_REDIRECT_URL, // Use explicit redirect URL
       },
     });
 
