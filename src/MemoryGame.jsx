@@ -19,6 +19,7 @@ function MemoryGame({ onBack }) {
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [gameEnded, setGameEnded] = useState(false);
+  const [finalScore, setFinalScore] = useState(0); // New state for final score
   const timerRef = useRef(null);
 
   // Shuffle cards
@@ -34,6 +35,7 @@ function MemoryGame({ onBack }) {
     setTimer(0);
     setIsRunning(false);
     setGameEnded(false);
+    setFinalScore(0); // Reset final score
     clearInterval(timerRef.current); // Clear any existing timer
   };
 
@@ -105,10 +107,28 @@ function MemoryGame({ onBack }) {
       setIsRunning(false);
       setGameEnded(true);
       clearInterval(timerRef.current);
-      console.log('Game Over! Score:', cards.length / 2, 'Time:', timer, 'Flips:', turns);
-      saveGameSession(cards.length / 2, timer, turns); // Save game data
+
+      // --- NEW SCORING LOGIC ---
+      const TotalPairsInGame = cards.length / 2;
+      const TotalFlips = turns;
+      const ElapsedTimeSeconds = timer;
+
+      const BasePointsPerPair = 100; // Points awarded per pair
+      const FlipPenalty = 5;         // Points deducted per flip
+      const TimePenalty = 2;         // Points deducted per second
+
+      let calculatedScore = (TotalPairsInGame * BasePointsPerPair) -
+                            (TotalFlips * FlipPenalty) -
+                            (ElapsedTimeSeconds * TimePenalty);
+
+      // Ensure score doesn't go below zero
+      calculatedScore = Math.max(0, calculatedScore);
+      setFinalScore(calculatedScore); // Set the final score for display
+
+      console.log('Game Over! Score:', calculatedScore, 'Time:', ElapsedTimeSeconds, 'Flips:', TotalFlips);
+      saveGameSession(calculatedScore, ElapsedTimeSeconds, TotalFlips); // Save game data
     }
-  }, [cards, gameEnded, timer, turns]);
+  }, [cards, gameEnded, timer, turns, setFinalScore]); // Added setFinalScore to dependency array
 
   // Function to save game session to Supabase
   const saveGameSession = async (score, time_taken_seconds, flips) => {
@@ -152,6 +172,7 @@ function MemoryGame({ onBack }) {
         {gameEnded && (
           <div className="bg-success/20 border-success text-success p-6 rounded-xl mb-6 text-3xl font-bold animate-pulse">
             <p>ยอดเยี่ยม! คุณทำได้แล้ว!</p>
+            <p>คะแนนของคุณ: {finalScore}</p> {/* Display the new score */}
             <p>ใช้เวลา: {timer} วินาที, พลิก: {turns} ครั้ง</p>
           </div>
         )}
