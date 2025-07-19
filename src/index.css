@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  font-family: 'Inter', sans-serif; /* Ensure Inter is used if available, or a generic sans-serif */
+  font-family: 'Kanit', sans-serif; /* Changed to Kanit */
 }
 
 /* Custom CSS for 3D card flip */

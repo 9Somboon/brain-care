@@ -18,13 +18,17 @@ function App() {
     });
 
     // Subscribe to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } = {} } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setLoading(false);
     });
 
     // Cleanup subscription
-    return () => subscription.unsubscribe();
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, []);
 
   if (loading) {
@@ -71,8 +75,6 @@ function App() {
           มาเริ่มการฝึกความจำของคุณกันเลย
         </p>
 
-        {/* Removed the connection message box as requested */}
-
         <div className="flex flex-col space-y-6">
           <button
             className="bg-primary hover:bg-primary/90 text-white font-bold py-5 px-10 rounded-xl text-2xl transition-all duration-300 ease-in-out shadow-lg
@@ -101,8 +103,6 @@ function App() {
             ออกจากระบบ
           </button>
         </div>
-
-        {/* Removed the footer text as requested */}
       </main>
     </div>
   );
