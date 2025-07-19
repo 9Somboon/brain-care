@@ -21,17 +21,17 @@ const UserDashboard = ({ onBack }) => {
   useEffect(() => {
     const fetchGameSessions = async () => {
       try {
-        // For a true user dashboard, you would filter by auth.uid() here:
-        // const { data, error } = await supabase
-        //   .from('game_sessions')
-        //   .select('*')
-        //   .eq('user_id', (await supabase.auth.getUser()).data.user.id) // Requires user to be logged in
-        //   .order('created_at', { ascending: true });
+        const { data: { user } } = await supabase.auth.getUser(); // Get current user
+        if (!user) {
+          setError('ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่');
+          setLoading(false);
+          return;
+        }
 
-        // For now, fetching all sessions as authentication is not yet implemented
         const { data, error } = await supabase
           .from('game_sessions')
           .select('*')
+          .eq('user_id', user.id) // Filter by current user's ID
           .order('created_at', { ascending: true });
 
         if (error) throw error;
