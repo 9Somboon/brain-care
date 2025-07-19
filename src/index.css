@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Inter', sans-serif; /* Ensure Inter is used if available, or a generic sans-serif */
+}
+
+/* Custom CSS for 3D card flip */
+.card-inner-wrapper {
+  transform-style: preserve-3d;
+}
+
+.card-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden; /* For Safari compatibility */
+}
+
+.card-back-face {
+  transform: rotateY(180deg);
+}
+
+.flipped {
+  transform: rotateY(180deg);
+}
