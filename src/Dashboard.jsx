@@ -102,6 +102,7 @@ const Dashboard = ({ onBack }) => {
           color: '#A3A3A3', // textSecondary
           font: {
             size: 16,
+            family: '"Noto Sans Thai", sans-serif',
           },
         },
       },
@@ -112,6 +113,7 @@ const Dashboard = ({ onBack }) => {
         font: {
           size: 24,
           weight: 'bold',
+          family: '"Noto Sans Thai", sans-serif',
         },
       },
       tooltip: {
@@ -122,15 +124,21 @@ const Dashboard = ({ onBack }) => {
         borderWidth: 1,
         cornerRadius: 8,
         padding: 12,
+        titleFont: {
+          family: '"Noto Sans Thai", sans-serif',
+        },
+        bodyFont: {
+          family: '"Noto Sans Thai", sans-serif',
+        },
       },
     },
     scales: {
       x: {
-        ticks: { color: '#A3A3A3', font: { size: 14 } },
+        ticks: { color: '#A3A3A3', font: { size: 14, family: '"Noto Sans Thai", sans-serif' } },
         grid: { color: 'rgba(47, 47, 47, 0.5)' }, // border
       },
       y: {
-        ticks: { color: '#A3A3A3', font: { size: 14 } },
+        ticks: { color: '#A3A3A3', font: { size: 14, family: '"Noto Sans Thai", sans-serif' } },
         grid: { color: 'rgba(47, 47, 47, 0.5)' }, // border
       },
     },
