@@ -19,6 +19,9 @@ export default {
         warning: '#FFC107', // Standard yellow/orange
         error: '#DC3545', // Standard red
       },
+      fontFamily: {
+        sans: ['Noto Sans Thai', 'sans-serif'],
+      },
     },
   },
   plugins: [
