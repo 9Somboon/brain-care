@@ -20,7 +20,7 @@ export default {
         error: '#DC3545', // Standard red
       },
       fontFamily: {
-        sans: ['Noto Sans Thai', 'sans-serif'],
+        sans: ['"Noto Sans Thai"', 'sans-serif'],
       },
     },
   },
