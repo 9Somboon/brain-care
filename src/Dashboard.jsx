@@ -140,6 +140,25 @@ const Dashboard = ({ onBack }) => {
     },
   };
 
+  const handleResetStats = async () => {
+    if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างสถิติทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
+      try {
+        const { error } = await supabase
+          .from('game_sessions')
+          .delete()
+          .neq('id', 0); // Delete all rows
+
+        if (error) throw error;
+
+        setGameSessions([]); // Clear local state
+        alert('ล้างสถิติทั้งหมดเรียบร้อยแล้ว');
+      } catch (err) {
+        console.error('Error resetting stats:', err.message);
+        setError('ไม่สามารถล้างสถิติได้: ' + err.message);
+      }
+    }
+  };
+
   const cardVariants = {
     hidden: { opacity: 0, y: 50 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
@@ -274,14 +293,25 @@ const Dashboard = ({ onBack }) => {
         )}
       </main>
 
-      <button
-        className="bg-primary hover:bg-primary/90 text-white font-bold py-5 px-10 rounded-xl text-2xl transition-all duration-300 ease-in-out shadow-lg
-                   focus:outline-none focus:ring-4 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-surface
-                   active:scale-98 mt-12"
-        onClick={onBack}
-      >
-        กลับสู่หน้าหลัก
-      </button>
+      <div className="flex space-x-4 mt-12">
+        <button
+          className="bg-primary hover:bg-primary/90 text-white font-bold py-5 px-10 rounded-xl text-2xl transition-all duration-300 ease-in-out shadow-lg
+                     focus:outline-none focus:ring-4 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-surface
+                     active:scale-98"
+          onClick={onBack}
+        >
+          กลับสู่หน้าหลัก
+        </button>
+        <button
+          className="bg-error hover:bg-error/90 text-white font-bold py-5 px-10 rounded-xl text-2xl transition-all duration-300 ease-in-out shadow-lg
+                     focus:outline-none focus:ring-4 focus:ring-error/50 focus:ring-offset-2 focus:ring-offset-surface
+                     active:scale-98"
+          onClick={handleResetStats}
+          disabled={totalGames === 0}
+        >
+          ล้างสถิติ
+        </button>
+      </div>
 
       <footer className="mt-12 text-textSecondary text-lg">
         &copy; {new Date().getFullYear()} BrainCare Pro. สงวนลิขสิทธิ์
