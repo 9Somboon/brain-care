@@ -4,6 +4,9 @@ import { Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { motion } from 'framer-motion';
 
+// Set default font for Chart.js
+ChartJS.defaults.font.family = '"Noto Sans Thai", sans-serif';
+
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
