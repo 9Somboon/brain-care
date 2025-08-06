@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from './supabaseClient';
+import { auth, db } from './firebaseClient';
+import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { motion } from 'framer-motion';
@@ -21,22 +22,27 @@ const UserDashboard = ({ onBack }) => {
   useEffect(() => {
     const fetchGameSessions = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser(); // Get current user
+        const user = auth.currentUser;
         if (!user) {
           setError('ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่');
           setLoading(false);
           return;
         }
 
-        const { data, error } = await supabase
-          .from('game_sessions')
-          .select('*')
-          .eq('user_id', user.id) // Filter by current user's ID
-          .order('created_at', { ascending: true });
+        const q = query(
+          collection(db, "game_sessions"),
+          where("user_id", "==", user.uid),
+          orderBy("created_at", "asc")
+        );
 
-        if (error) throw error;
-        setGameSessions(data);
-        processGameSessions(data); // Process data for summaries
+        const querySnapshot = await getDocs(q);
+        const sessions = querySnapshot.docs.map(doc => ({
+          ...doc.data(),
+          created_at: doc.data().created_at.toDate() // Convert Firestore Timestamp to Date
+        }));
+        
+        setGameSessions(sessions);
+        processGameSessions(sessions); // Process data for summaries
       } catch (err) {
         console.error('Error fetching game sessions:', err.message);
         setError('ไม่สามารถโหลดข้อมูลสถิติได้: ' + err.message);

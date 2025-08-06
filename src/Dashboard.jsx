@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from './supabaseClient';
+import { db } from './firebaseClient';
+import { collection, getDocs, orderBy, query, writeBatch } from "firebase/firestore";
 import { Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { motion } from 'framer-motion';
@@ -18,13 +19,14 @@ const Dashboard = ({ onBack }) => {
   useEffect(() => {
     const fetchGameSessions = async () => {
       try {
-        const { data, error } = await supabase
-          .from('game_sessions')
-          .select('*')
-          .order('created_at', { ascending: true });
-
-        if (error) throw error;
-        setGameSessions(data);
+        const q = query(collection(db, "game_sessions"), orderBy("created_at", "asc"));
+        const querySnapshot = await getDocs(q);
+        const sessions = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            created_at: doc.data().created_at.toDate()
+        }));
+        setGameSessions(sessions);
       } catch (err) {
         console.error('Error fetching game sessions:', err.message);
         setError('ไม่สามารถโหลดข้อมูลสถิติได้: ' + err.message);
@@ -154,13 +156,13 @@ const Dashboard = ({ onBack }) => {
   const handleResetStats = async () => {
     if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างสถิติทั้งหมด? การกระทำนี้ไม่สามารถย้อนกลับได้')) {
       try {
-        const { error } = await supabase
-          .from('game_sessions')
-          .delete()
-          .neq('id', 0); // Delete all rows
-
-        if (error) throw error;
-
+        const querySnapshot = await getDocs(collection(db, "game_sessions"));
+        const batch = writeBatch(db);
+        querySnapshot.forEach((doc) => {
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+        
         setGameSessions([]); // Clear local state
         alert('ล้างสถิติทั้งหมดเรียบร้อยแล้ว');
       } catch (err) {

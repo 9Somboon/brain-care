@@ -8,9 +8,9 @@ export default defineConfig({
     host: true, // This makes the server accessible externally
     port: 5173,
     strictPort: true,
-    hmr: {
-      clientPort: 443 // Use 443 for Gitpod / WebContainer
-    },
+    // hmr: {
+    //   clientPort: 443 // Use 443 for Gitpod / WebContainer
+    // },
     watch: {
       usePolling: true // Needed for WSL / some Docker setups
     },

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from './supabaseClient'; // Import supabase client
+import { auth, db } from './firebaseClient'; // Import firebase clients
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const cardImages = [
   { content: '🍎', matched: false },
@@ -130,25 +131,23 @@ function MemoryGame({ onBack }) {
     }
   }, [cards, gameEnded, timer, turns, setFinalScore]); // Added setFinalScore to dependency array
 
-  // Function to save game session to Supabase
+  // Function to save game session to Firestore
   const saveGameSession = async (score, time_taken_seconds, flips) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser(); // Get current user
-      const userId = user ? user.id : null; // Get user ID, or null if not logged in
+      const user = auth.currentUser; // Get current user
+      const userId = user ? user.uid : null; // Get user ID, or null if not logged in
 
-      const { data, error } = await supabase
-        .from('game_sessions')
-        .insert([
-          { score, time_taken_seconds, flips, user_id: userId } // Pass user_id
-        ]);
+      await addDoc(collection(db, "game_sessions"), {
+        score,
+        time_taken_seconds,
+        flips,
+        user_id: userId,
+        created_at: serverTimestamp() // Add a server-side timestamp
+      });
 
-      if (error) {
-        console.error('Error saving game session:', error.message);
-      } else {
-        console.log('Game session saved successfully:', data);
-      }
+      console.log('Game session saved successfully');
     } catch (err) {
-      console.error('Unexpected error saving game session:', err.message);
+      console.error('Error saving game session:', err.message);
     }
   };
 

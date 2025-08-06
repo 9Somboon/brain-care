@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
-import { supabase } from './supabaseClient';
+import { auth } from './firebaseClient';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup
+} from "firebase/auth";
 
 function Auth() {
   const [loading, setLoading] = useState(false);
@@ -13,54 +19,34 @@ function Auth() {
     setLoading(true);
     setMessage('');
 
-    let error;
-    if (isSignUp) {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: import.meta.env.VITE_SUPABASE_REDIRECT_URL, // Use explicit redirect URL
-          data: {
-            // You can add user metadata here if needed
-          }
-        }
-      });
-      error = signUpError;
-      if (!error) {
+    try {
+      if (isSignUp) {
+        await createUserWithEmailAndPassword(auth, email, password);
         setMessage('ลงทะเบียนสำเร็จ! โปรดเข้าสู่ระบบ');
         setIsSignUp(false); // Switch to sign in after successful signup
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
       }
-    } else {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      error = signInError;
-    }
-
-    if (error) {
+    } catch (error) {
       setMessage(`ข้อผิดพลาด: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setMessage('');
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: import.meta.env.VITE_SUPABASE_REDIRECT_URL, // Use explicit redirect URL
-      },
-    });
-
-    if (error) {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      // Firebase will handle the redirect and session management.
+      // The onAuthStateChanged listener in App.jsx will handle the session.
+    } catch (error) {
       setMessage(`ข้อผิดพลาดในการเข้าสู่ระบบด้วย Google: ${error.message}`);
-    } else {
-      // Supabase will redirect the user, so no direct success message here
-      // The onAuthStateChange listener in App.jsx will handle the session
+    } finally {
+      setLoading(false);
     }
-    setLoading(false); // This might not be reached if redirect happens immediately
   };
 
   return (
